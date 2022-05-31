@@ -5,7 +5,7 @@
 #include <math.h>
 #include <algorithm>
 typedef unsigned  char BASE;
-typedef unsigned   short int DBASE;
+typedef unsigned   short  DBASE;
 #define BASE_SIZE (sizeof(BASE)*8);
 using namespace std;
 
@@ -379,7 +379,7 @@ void BN::cin_10() {
     string s;
     cout <<"Base10: ";
     getline(cin,s);
-    int k=s.length();
+    int k=s.length();///длина строки пользователя
     BASE t=0;
     DBASE tmp =0;
 
@@ -388,10 +388,10 @@ void BN::cin_10() {
     BN bNum((k-1)/(b/4)+1);
 
     while (j<k){
-        if ('0'>s[j] || s[j]>9){
+        if ('0'>s[j] || s[j]>'9'){
             throw invalid_argument("Invalid arguments");
         }
-        t =s[j] -'0';
+        t =s[j] -'0';///преобразование из строки в число
         bNum=bNum*((BASE)10);
 
         BN newNum;
@@ -408,150 +408,162 @@ void BN::cin_10() {
     *this=bNum;
 }
 
-BN BN::operator/(const BN &num ) {
-    if (num.len ==1 && num.coef[0]==0){
-        throw invalid_argument("Invalid arguments1");
+BN BN::operator/(const BN &num) {
+
+    if(num.len == 1 && num.coef[0] == 0){
+        throw invalid_argument("Invalid arguments1.");
     }
-    if (num.len ==1){
-        return *this /num.coef[0];
+    if(*this < num){///маленькое делим на большое
+        BN finNum(1);
+        return finNum;
     }
-    int m = len-num.len;
-    int base_size =BASE_SIZE;
-    DBASE b = ((DBASE)1<< base_size);
-    DBASE d =b/(DBASE)(num.coef[num.len-1]+(BASE)1);
-    int j=m;
-    int k=0;
 
-    BN newNum =*this;
-    newNum *=d;
-    BN delNum =num;
-    delNum *=d;
+    if(num.len == 1){
+        return *this / num.coef[0];
+    }
 
-    BN finNum (m+1);
-    finNum.len=m+1;
+    int m = len-num.len;/// длина ответа
+    int base_size = BASE_SIZE;
+    DBASE b = ((DBASE)1<<base_size);///основание числа
+    DBASE d = b/(DBASE)(num.coef[num.len-1] + (BASE)1);///для нормализации
+    int j = m;
+    int k = 0;///перенос
 
-    if(newNum.len==len){
+    BN newNum = *this;
+    newNum *= d;
+    BN delNum = num;
+    delNum *= d;
+
+    BN finNum(m+1);
+    finNum.len = m+1;
+
+    if(newNum.len == len){/// сравниваем длину нормализованного с исходным
         newNum.maxlen++;
-        newNum.len=maxlen;
-        newNum.coef= new BASE [maxlen];
-        for (int i=0; i<len; i++){
-            newNum.coef[i]=coef[i];
+        newNum.len = maxlen;
+        delete []newNum.coef;
+        newNum.coef = new BASE[maxlen];
+        for (int i = 0; i <  len; i++){
+            newNum.coef[i] = coef[i];
         }
-        newNum *=d;
+        newNum *= d;
         newNum.len++;
-        newNum.coef[newNum.len-1]=0;
+        newNum.coef[newNum.len-1] = 0;
     }
 
-    while (j > -1) {
-        DBASE q = (DBASE) ((DBASE) ((DBASE) ((DBASE) (newNum.coef[j + delNum.len]) * (DBASE) (b)) +
-                                    (DBASE) (newNum.coef[j + delNum.len - 1])) / (DBASE) (delNum.coef[delNum.len - 1]));
-        DBASE r = (DBASE) ((DBASE) ((DBASE) ((DBASE) (newNum.coef[j + delNum.len]) * (DBASE) (b)) +
-                                    (DBASE) (newNum.coef[j + delNum.len - 1])) % (DBASE) (delNum.coef[delNum.len - 1]));
+    while (j>-1){
+        DBASE q = (DBASE)( (DBASE)( (DBASE)( (DBASE)(newNum.coef[j + delNum.len]) * (DBASE)(b) ) + (DBASE)( newNum.coef[j + delNum.len - 1] ) ) / (DBASE)( delNum.coef[delNum.len - 1] ) );
+        DBASE r = (DBASE)( (DBASE)( (DBASE)( (DBASE)(newNum.coef[j + delNum.len]) * (DBASE)(b) ) + (DBASE)( newNum.coef[j + delNum.len - 1] ) ) % (DBASE)( delNum.coef[delNum.len - 1] ) );
 
-        if (q == b || (DBASE) ((DBASE) (q) * (DBASE) (delNum.coef[delNum.len - 2])) >
-                      (DBASE) ((DBASE) ((DBASE) (b) * (DBASE) (r)) + (DBASE) (newNum.coef[j + delNum.len - 2]))) {
+        if(q == b || (DBASE)( (DBASE)(q) * (DBASE)( delNum.coef[delNum.len-2] ) ) > (DBASE)( (DBASE)( (DBASE)(b) * (DBASE)(r) ) + (DBASE)( newNum.coef[j+delNum.len-2] ) )){
             q--;
-            r = (DBASE) (r) + (DBASE) (delNum.coef[delNum.len - 1]);
-            if ((DBASE) (r) < b) {
-                if (q == b || (DBASE) ((DBASE) (q) * (DBASE) (delNum.coef[delNum.len - 2])) >
-                              (DBASE) ((DBASE) ((DBASE) (b) * (DBASE) (r)) +
-                                       (DBASE) (newNum.coef[j + delNum.len - 2]))) {
+            r = (DBASE)(r) + (DBASE)(delNum.coef[delNum.len - 1]);
+            if((DBASE)(r)<b){
+                if(q == b || (DBASE)( (DBASE)(q) * (DBASE)(delNum.coef[delNum.len-2]) ) > (DBASE)( (DBASE)( (DBASE)(b) * (DBASE)(r) ) + (DBASE)( newNum.coef[j+delNum.len-2] ) )){
+                    q--;
+                }
+            }
+        }
+
+        BN u(delNum.len + 1);
+        u.len = delNum.len + 1;
+        for(int i = 0; i < delNum.len + 1; i++){
+            u.coef[i] = newNum.coef[j+i];///кусок делимого длины делителя
+        }
+
+        if(u <  delNum*(BASE)(q)){///проверка
+            q--;
+        }
+
+        u = u -  delNum*(BASE)(q);///отнимаем делитель на q
+        finNum.coef[j] = (BASE)(q);
+
+        for(int i = 0; i < delNum.len + 1; i++){
+            newNum.coef[j+i] = u.coef[i];
+        }
+
+        j--;
+    }
+
+    while(finNum.len>1 && finNum.coef[finNum.len-1]==0){
+        finNum.len--;
+    }
+
+    return finNum;
+}
+
+BN BN:: operator %(const BN& num){
+    if(num.len == 1 && num.coef[0] == 0){
+        throw invalid_argument("Invalid arguments.");
+    }
+    if(*this < num){
+        return *this;
+    }
+
+    if(num.len == 1){
+        return *this % num.coef[0];
+    }
+
+    int m = len-num.len;
+    int base_size = BASE_SIZE;
+    DBASE b = ((DBASE)( 1 )<<( base_size) );
+    BASE d = (BASE)( (DBASE)( b ) / (DBASE)( ( num.coef[num.len-1] ) + (BASE)( 1 ) ) );
+    int j = m;
+    int k = 0;
+
+    BN newNum = *this;
+    newNum *= d;
+    BN delNum = num;
+    delNum *= d;
+    if(newNum.len == len){
+        newNum.maxlen++;
+        newNum.len = maxlen;
+        newNum.coef = new BASE[maxlen];
+        for (int i = 0; i <  len; i++){
+            newNum.coef[i] = coef[i];
+        }
+        newNum *= d;
+        newNum.len++;
+        newNum.coef[newNum.len-1] = 0;
+    }
+
+    while (j>-1){
+        DBASE q = (DBASE)( (DBASE)( (DBASE)( (DBASE)(newNum.coef[j + delNum.len]) * (DBASE)(b) ) + (DBASE)( newNum.coef[j + delNum.len - 1] ) ) / (DBASE)( delNum.coef[delNum.len - 1] ) );
+        DBASE r = (DBASE)( (DBASE)( (DBASE)( (DBASE)(newNum.coef[j + delNum.len]) * (DBASE)(b) ) + (DBASE)( newNum.coef[j + delNum.len - 1] ) ) % (DBASE)( delNum.coef[delNum.len - 1] ) );
+        if(q == b || (DBASE)( (DBASE)(q) * (DBASE)( delNum.coef[delNum.len-2] ) ) > (DBASE)( (DBASE)( (DBASE)(b) * (DBASE)(r) ) + (DBASE)( newNum.coef[j+delNum.len-2] ) )){
+            q--;
+            r = (DBASE)(r) + (DBASE)(delNum.coef[delNum.len - 1]);
+            if((DBASE)(r)<b){
+                if(q == b || (DBASE)( (DBASE)(q) * (DBASE)( delNum.coef[delNum.len-2]) ) > (DBASE)( (DBASE)( (DBASE)(b) * (DBASE)(r) ) + (DBASE)( newNum.coef[j+delNum.len-2] ) )){
                     q--;
                 }
             }
         }
         BN u(delNum.len + 1);
         u.len = delNum.len + 1;
-        for (int i = 0; i < delNum.len + 1; i++) {
-            u.coef[i] = newNum.coef[j + i];
+        for(int i = 0; i < delNum.len + 1; i++){
+            u.coef[i] = newNum.coef[j+i];
         }
-        if (u < delNum * (BASE) (q)) {
+
+        if(u < delNum*(BASE)(q)){
+
             q--;
         }
 
-        u = u - delNum * (BASE) (q);
-        finNum.coef[j] = (BASE) (q);
+        u = u - (  delNum * (BASE)(q));
 
-        for (int i = 0; i < delNum.len + 1; i++ ) {
-            newNum.coef[j+i]=u.coef[i];
+
+        for(int i = 0; i < delNum.len + 1; i++){
+            newNum.coef[j+i] = u.coef[i];
         }
+
+
         j--;
     }
-    while(finNum.len>1&& finNum.coef[finNum.len-1]==0){
-        finNum.len--;
-    }
-    return finNum;
-}
-
-BN BN:: operator %(const BN& num){
-    if (num.len ==1 && num.coef[0]==0){
-        throw invalid_argument("Invalid arguments.");
-    }
-    if(*this <num){
-        return *this;
-    }
-    if( num.len==1){
-        return *this % num.coef[0];
-    }
-    int m= len -num.len;
-    int base_size=BASE_SIZE;
-    DBASE b =((DBASE)(1)<<(base_size));
-    BASE d =(BASE)((DBASE)(b)/ (DBASE)(num.coef[num.len-1])+(BASE)(1));
-    int j=m;
-    int k =0;
-
-    BN newNum =*this;
-    newNum *=d;
-    BN delNum = num;
-    delNum *=d;
-    if (newNum.len == len){
-        newNum.maxlen++;
-        newNum.len=maxlen;
-        newNum.coef=new BASE [maxlen];
-        for(int i =0; i<len; i++){
-            newNum.coef[i]=coef[i];
-        }
-        newNum *= d;
-        newNum.len++;
-        newNum.coef[newNum.len-1]=0;
-    }
-
-    while (j > -1) {
-        DBASE q = (DBASE) ((DBASE) ((DBASE) ((DBASE) (newNum.coef[j + delNum.len]) * (DBASE) (b)) +
-                                    (DBASE) (newNum.coef[j + delNum.len - 1])) / (DBASE) (delNum.coef[delNum.len - 1]));
-        DBASE r = (DBASE) ((DBASE) ((DBASE) ((DBASE) (newNum.coef[j + delNum.len]) * (DBASE) (b)) +
-                                    (DBASE) (newNum.coef[j + delNum.len - 1])) % (DBASE) (delNum.coef[delNum.len - 1]));
-        if (q == b || (DBASE) ((DBASE) (q) * (DBASE) (delNum.coef[delNum.len - 2])) >
-                      (DBASE) ((DBASE) ((DBASE) (b) * (DBASE) (r)) + (DBASE) (newNum.coef[j + delNum.len - 2]))) {
-            q--;
-            r = (DBASE) (r) + (DBASE) (delNum.coef[delNum.len - 1]);
-            if ((DBASE) (r) < b) {
-                if (q == b || (DBASE) ((DBASE) (q) * (DBASE) (delNum.coef[delNum.len - 2])) >
-                              (DBASE) ((DBASE) ((DBASE) (b) * (DBASE) (r)) +
-                                       (DBASE) (newNum.coef[j + delNum.len - 2]))) {
-                    q--;
-                }
-            }
-        }
-        BN u(delNum.len+1);
-        u.len = delNum.len+1;
-        for(int i=0; i< delNum.len+1;i++ ){
-            u.coef[i]=newNum.coef[j+i];
-        }
-        if(u<(delNum*(BASE)(q))){
-            q--;
-        }
-        u=u-(delNum*(BASE)(q));
-
-        for (int i=0; i<delNum.len+1; i++){
-            newNum.coef[j+i]=u.coef[i];
-        }
-        j--;
-    }
-    while (newNum.len>1 && newNum.coef[newNum.len-1]==0){
+    while(newNum.len>1 && newNum.coef[newNum.len-1]==0){
         newNum.len--;
     }
-    return newNum/d;
+
+    return newNum / d;
 }
 istream& operator >> (istream &in, BN & bNum){
     char* s = new char[1000];
@@ -603,16 +615,18 @@ ostream& operator << (ostream& st, const BN& num)
     return st;
 }
 void test(){
-    srand(time (NULL));
-    int M =1000;
-    int T =1000;
+    srand( time(NULL) );
+    int M = 1000;
+    int T = 1000;
 
     BN A;
     BN B;
     BN C;
     BN D;
-    do {
-        int n =rand()%M+1;
+    do
+    {
+
+        int n = rand()%M + 1;
         int m = rand()%M + 1;
         BN E (n, 1);
         BN G (m, 1);
@@ -620,19 +634,28 @@ void test(){
         B = G;
         C = A / B;
         D = A % B;
+        cout<<"m: "<<m<<" ";
+        cout<<"n: "<<n<<" ";
+        cout<<"T: "<<T<<endl;
+
     }
     while (A == C * B + D && A - D == C*B && D<B && --T);
     cout<<T<<endl;
-    if(T!=0){
-        // cout<<"A: "<<A<<endl;
-        cout<<"B: "<<B<<endl;
-        // cout<<"C: "<<C<<endl;
-        cout<<"D: "<<D<<endl;
-    }
+    // if(T!=0){
+    //     // cout<<"A: "<<A<<endl;
+    //     cout<<"B: "<<B<<endl;
+    //     // cout<<"C: "<<C<<endl;
+    //     cout<<"D: "<<D<<endl;
+    // }
+
+
 
 }
 int main() {
-  test();
+   //BN slave;
+   //slave.cin_10();
+   //slave.cout_10();
+   test();
     return 0;
 
 }
