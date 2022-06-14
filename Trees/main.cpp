@@ -22,6 +22,10 @@ public:
     }
 };
 
+struct elem{
+    Node * p;// на уузел
+    elem * next;// на следующий элемент
+};
 
 
 class BinTree {
@@ -66,8 +70,8 @@ public:
     Node *find(int);
     int max();
     int min();
-    ///elem* BFS();
-    ///void LRK(Node* );
+    elem* BFS();
+    void LRK(Node* );
 
 };
 
@@ -176,16 +180,22 @@ int BinTree::max() {
     }
     return -1;
 }
-////Проблемное удаление
+////начинаем от сюда))))) 0_0
+///                       \|/
+///                       |
+///                      /\
+///
 Node *BinTree::del(Node *s) {
     return del(s->key);
 }
 
 Node *BinTree::del(int k) {
-    Node *current = root;
+    Node *current = root;///узел работы
     Node *parent = NULL;
     Node *s;
-    while (current && current->key != k) {
+    Node *r;
+    Node d;
+    while (current && current->key != k) {///выбираем куда идти
         parent = current;
         if (current->key > k)
             current = current->left;
@@ -193,33 +203,99 @@ Node *BinTree::del(int k) {
             current = current->right;
     }
     if (!current)
-        throw invalid_argument("Ti sho? Key not found.");
+        throw invalid_argument("Ti sho? Key not found.");///ключ не найден
 
-    else if (current->left == NULL)
-        if (parent && parent->left == current) {
+    else if (current->left == NULL)///есть ли левые потомки
+        if (parent && parent->left == current) {///родитель справа
             parent->left = current->right;
-            delete current;
+            delete current;//дроп узел и сдвигаем вверх
             return  parent->left;
-        } else if (parent && parent->right == current){
+        } else if (parent && parent->right == current){/// родитель слева
             parent->right = current->right;
-            delete current;
+            delete current;//дроп узел и сдвиг вверх
             return parent->right;
         }
-        else {
-            s = current->right;
+        else {/// попадаю в корень
+            s = current->right;//сдвигаю корень
             root = s;
             return root;
         }
+        else if (current -> right == NULL){/// правые потомки 0 тоже самое но зеркально
+            if (parent && parent->left == current){
+                parent->left = current->left;
+                delete current;
+                return parent->left;
+            } else if (parent && parent->right == current){
+                parent->right = current->left;
+                delete current;
+                return parent->right;
+            } else {
+                s= current->left;
+                root =s;
+                return root;
+            }
+        }
+        s = current->right;/// если есть потомки , то идем в право
+        if (s->left == NULL){//смотрим левые потомки
+            current->key = s->key;// перенесли ключ
+            current->right = s->right;// сдвиг вверх
+            delete s;
+            return current;
+        }
+    while (s->left != NULL){// бежим в крайний левый
+        r =s;
+        s=s->left;//выбрали левый
+    }
+    current->key = s->key;
+    r->left=s->right;//выбраным узлом заменяем удаляемый
+    delete s;
+    return current;
 }
-///проблема кончилась
+
+elem* BinTree::BFS() {
+    elem* runner;
+    elem* h=new elem;
+    elem* t;
+    h->p = root;
+    h->next = NULL;
+    t = h;
+    runner = h;
+    while (h != NULL) {
+        if (h->p->left != NULL) {
+            elem* left_child = new elem;
+            left_child->p = h->p->left;// учли 1 ребёнка
+            left_child->next = NULL;// следующий пока нулевой
+            runner->next = left_child;
+            runner = runner->next;
+        }
+        if (h->p->right != NULL) {
+            elem* right_child = new elem;
+            right_child->p = h->p->right;// учитываем одного правого
+            right_child->next = NULL;// следующий пустой
+            runner->next = right_child;
+            runner = runner->next;
+        }
+        cout << h->p->key << " " ;// Выводим 1 элемент
+        h = h->next;//перехожу на следующий элем
+    }
+    cout << endl;
+    return t;
+}
+void BinTree:: LRK (Node * r =NULL){
+    if ( r == NULL) r = root;
+    if (r->left) LRK(r->left);
+    if (r->right) LRK(r->right);
+    cout << r -> key<< " ";
+}
 
 int test() {
-    int a[] = {13, 1, 45, 3, 4, 56};
+    int a[] = {13, 1, 45, 3, 4, 56, 13, };
     BinTree hah(10);
     BinTree heh(hah);
     BinTree hoh(6);
-    BinTree hih(6, a);
+    BinTree hih(10, a);
     hoh = hah;
+
     hah.print();
     cout<< "////////////////////////////////////////////////////////////////"<< endl;
     heh.print();
@@ -233,6 +309,22 @@ int test() {
     cout<< "max="<< hih.max()<< endl;
     cout<< "search 3="<< hih.find(3)<< endl;
     cout<< "search 1000="<< hih.find(1000)<< endl;
+    cout<< "delete 3="<< endl;
+    hih.print();
+    cout<<"//////////////////////////////////////////////////////////////////////////////////"<<endl;
+    hih.del(3);
+    hih.print();
+    hih.LRK();
+    cout <<endl;
+    hih.BFS();
+
+    BinTree hzh(12);
+    int keys;
+    hzh.print();
+    cout<< "vvod key"<< endl;
+    cin >> keys;
+    hzh.del(keys);
+    hzh.print();
 }
 int main(){
    test();
